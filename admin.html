@@ -66,6 +66,25 @@
     </form>
 </div>
 
+<hr style="margin: 40px 0; border: 1px solid #e5e7eb;">
+
+<h2 style="color: #1D4ED8; margin-bottom: 20px;">Live Database Dashboard</h2>
+<div style="overflow-x: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+    <table style="width: 100%; text-align: left; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f3f4f6; border-bottom: 2px solid #e5e7eb;">
+                <th style="padding: 12px;">Lodge Name</th>
+                <th style="padding: 12px;">Room Type</th>
+                <th style="padding: 12px;">Price</th>
+                <th style="padding: 12px;">Action</th>
+            </tr>
+        </thead>
+        <tbody id="adminTableBody">
+            <tr><td colspan="4" style="padding: 12px; text-align: center;">Loading database...</td></tr>
+        </tbody>
+    </table>
+</div>
+
 <script>
     // --- CLOUDINARY CONFIGURATION ---
     // REPLACE THESE WITH YOUR ACTUAL CLOUDINARY DETAILS
@@ -138,6 +157,67 @@
             submitBtn.disabled = false;
         }
     });
+
+    // --- ADMIN DASHBOARD LOGIC ---
+    const adminTableBody = document.getElementById('adminTableBody');
+
+    async function loadAdminDashboard() {
+        try {
+            const response = await fetch('https://rentdirect-api.onrender.com/api/lodges');
+            const lodges = await response.json();
+            
+            adminTableBody.innerHTML = ''; // Clear loading text
+            
+            if (lodges.length === 0) {
+                adminTableBody.innerHTML = '<tr><td colspan="4" style="padding: 12px; text-align: center;">No lodges in database.</td></tr>';
+                return;
+            }
+
+            lodges.forEach(lodge => {
+                // MongoDB automatically creates a unique _id for every item
+                const row = `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 12px; font-weight: bold;">${lodge.lodgeName}</td>
+                        <td style="padding: 12px;">${lodge.roomType}</td>
+                        <td style="padding: 12px;">₦${lodge.price.toLocaleString()}</td>
+                        <td style="padding: 12px;">
+                            <button onclick="deleteLodge('${lodge._id}')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                adminTableBody.insertAdjacentHTML('beforeend', row);
+            });
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            adminTableBody.innerHTML = '<tr><td colspan="4" style="padding: 12px; text-align: center; color: red;">Failed to connect to database.</td></tr>';
+        }
+    }
+
+    async function deleteLodge(lodgeId) {
+        // Double-check before deleting
+        if (!confirm('Are you sure you want to permanently delete this lodge? This cannot be undone.')) return;
+
+        try {
+            const response = await fetch(`https://rentdirect-api.onrender.com/api/lodges/${lodgeId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                // Instantly reload the table to show it was removed
+                loadAdminDashboard(); 
+            } else {
+                alert('Failed to delete lodge. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error deleting:', error);
+            alert('A network error occurred.');
+        }
+    }
+
+    // Automatically load the table when the admin page opens
+    loadAdminDashboard();
 </script>
 
 </body>
