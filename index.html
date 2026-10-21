@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rentdirect - Find Your Space</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">Rentdirect</div>
+        <button class="menu-btn">☰</button>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Find verified student lodges.</h1>
+        <p>No agent fees. No trekking. Direct contacts.</p>
+    </section>
+
+    <!-- Search & Filters -->
+    <div class="search-container">
+        <div class="search-box">
+            <span>🔍</span>
+            <input type="text" placeholder="Search by street or landmark (e.g. TTC Road)" onkeyup="searchLodges(this.value)">
+        </div>
+        <div class="filter-row">
+            <button class="filter-btn active" onclick="filterLodges('All')">All</button>
+            <button class="filter-btn" onclick="filterLodges('Self-Contain')">Self-Contain</button>
+            <button class="filter-btn" onclick="filterLodges('Single Room')">Single Room</button>
+            <button class="filter-btn" onclick="filterLodges('1-Bedroom Flat')">1-Bedroom Flat</button>
+        </div>
+    </div>
+
+    <!-- Feed / Listings -->
+    <main class="feed-container">
+        <h2 class="section-title">Newly Listed Near Campus</h2>
+
+        <!-- Card 1 -->
+        <article class="card">
+            <div class="card-img-container">
+                <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Room Interior">
+                <div class="badge-verified">✓ Verified</div>
+                <div class="badge-type">Self-Contain</div>
+            </div>
+            <div class="card-content">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Silver Crest Lodge</h3>
+                    </div>
+                    <div class="card-price">
+                        <div class="price-amount">₦150,000</div>
+                        <div class="price-period">/ year</div>
+                    </div>
+                </div>
+                <div class="card-location">📍 Behind School Clinic, Bori</div>
+                
+                <div class="amenities">
+                    <span class="amenity-tag">💧 Running Water</span>
+                    <span class="amenity-tag">⚡ Prepaid Meter</span>
+                    <span class="amenity-tag">🧱 Fenced</span>
+                </div>
+                
+                <div class="card-action">
+                    <button class="btn-primary">
+                        🔒 Unlock Caretaker Contact (₦500)
+                    </button>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="card">
+            <div class="card-img-container">
+                <img src="https://images.unsplash.com/photo-1554995207-c18c203602cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Room Interior">
+                <div class="badge-verified">✓ Verified</div>
+                <div class="badge-type">Single Room</div>
+            </div>
+            <div class="card-content">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Peace Villa</h3>
+                    </div>
+                    <div class="card-price">
+                        <div class="price-amount">₦70,000</div>
+                        <div class="price-period">/ year</div>
+                    </div>
+                </div>
+                <div class="card-location">📍 TTC Road</div>
+                
+                <div class="amenities">
+                    <span class="amenity-tag">💧 Borehole</span>
+                    <span class="amenity-tag">🚽 Shared Toilet</span>
+                </div>
+                
+                <div class="card-action">
+                    <button class="btn-primary">
+                        🔒 Unlock Caretaker Contact (₦500)
+                    </button>
+                </div>
+            </div>
+        </article>
+
+    </main>
+
+  <script>
+    const API_URL = 'https://rentdirect-api.onrender.com/api/lodges';
+    const feedContainer = document.querySelector('.feed-container');
+    
+    // We store all fetched lodges here so we can filter them instantly without reloading
+    let allLodges = []; 
+
+    // 1. Fetch data from the live server
+    async function loadLodges() {
+        try {
+            const response = await fetch(API_URL);
+            allLodges = await response.json();
+            
+            // Render everything by default
+            renderLodges(allLodges); 
+        } catch (error) {
+            console.error('Error loading lodges:', error);
+            feedContainer.innerHTML = '<p style="text-align:center; color:red;">Failed to load lodges.</p>';
+        }
+    }
+
+    // 2. The function that actually draws the HTML cards on the screen
+    function renderLodges(lodgesToDisplay) {
+        feedContainer.innerHTML = '<h2 class="section-title">Available Lodges</h2>';
+
+        // If the filter finds nothing, show a friendly message
+        if (lodgesToDisplay.length === 0) {
+            feedContainer.innerHTML += '<p style="text-align:center; color:#6B7280; margin-top:20px;">No lodges found matching this search.</p>';
+            return;
+        }
+
+        lodgesToDisplay.forEach(lodge => {
+            const amenitiesHtml = lodge.amenities.map(amenity => `<span class="amenity-tag">✓ ${amenity}</span>`).join('');
+            const formattedPrice = lodge.price.toLocaleString();
+
+            const cardHtml = `
+                <article class="card">
+                    <div class="card-img-container">
+                        <img src="${lodge.imageUrls[0]}" alt="Room Interior">
+                        ${lodge.isVerified ? '<div class="badge-verified">✓ Verified</div>' : ''}
+                        <div class="badge-type">${lodge.roomType}</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">${lodge.lodgeName}</h3>
+                            </div>
+                            <div class="card-price">
+                                <div class="price-amount">₦${formattedPrice}</div>
+                                <div class="price-period">/ year</div>
+                            </div>
+                        </div>
+                        <div class="card-location">📍 ${lodge.location}</div>
+                        <div class="amenities">${amenitiesHtml}</div>
+                        <div class="card-action">
+                            <button class="btn-primary" onclick="alert('Contact Caretaker: ${lodge.caretakerContact}')">
+                                🔒 Unlock Caretaker Contact (₦500)
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            `;
+            feedContainer.insertAdjacentHTML('beforeend', cardHtml);
+        });
+    }
+
+    // 3. Category Filter Logic (Triggered by the buttons)
+    function filterLodges(category) {
+        if (category === 'All') {
+            renderLodges(allLodges);
+        } else {
+            const filtered = allLodges.filter(lodge => lodge.roomType === category);
+            renderLodges(filtered);
+        }
+    }
+
+    // 4. Search Bar Logic (Triggered while typing)
+    function searchLodges(query) {
+        const searchTerm = query.toLowerCase();
+        const searchResults = allLodges.filter(lodge => 
+            lodge.lodgeName.toLowerCase().includes(searchTerm) || 
+            lodge.location.toLowerCase().includes(searchTerm)
+        );
+        renderLodges(searchResults);
+    }
+
+    // Run when the page first opens
+    loadLodges();
+</script>
+</body>
+</html>

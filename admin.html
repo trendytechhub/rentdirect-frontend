@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentDirect - Admin Upload</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #F3F4F6; padding: 20px; color: #111827; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { font-size: 1.5rem; margin-bottom: 20px; color: #1D4ED8; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        button { width: 100%; background: #16A34A; color: white; border: none; padding: 14px; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:disabled { background: #9CA3AF; cursor: not-allowed; }
+        .hint { font-size: 0.75rem; color: #6B7280; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Upload New Lodge</h1>
+    <form id="uploadForm">
+        <div class="form-group">
+            <label>Lodge Name</label>
+            <input type="text" id="lodgeName" required placeholder="e.g. Silver Crest Lodge">
+        </div>
+
+        <div class="form-group">
+            <label>Room Type</label>
+            <select id="roomType" required>
+                <option value="Self-Contain">Self-Contain</option>
+                <option value="Single Room">Single Room</option>
+                <option value="1-Bedroom Flat">1-Bedroom Flat</option>
+                <option value="Roommate Needed">Roommate Needed</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Price (₦ / year)</label>
+            <input type="number" id="price" required placeholder="150000">
+        </div>
+
+        <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="location" required placeholder="e.g. TTC Road, Bori">
+        </div>
+
+        <div class="form-group">
+            <label>Amenities</label>
+            <input type="text" id="amenities" required placeholder="Running Water, Prepaid Meter, Fenced">
+            <div class="hint">Separate each with a comma</div>
+        </div>
+
+        <div class="form-group">
+            <label>Caretaker Phone</label>
+            <input type="text" id="caretakerContact" required placeholder="08012345678">
+        </div>
+
+        <div class="form-group">
+            <label>Lodge Photo</label>
+            <input type="file" id="imageFile" accept="image/*" required>
+        </div>
+
+        <button type="submit" id="submitBtn">Upload to Database</button>
+    </form>
+</div>
+
+<script>
+    // --- CLOUDINARY CONFIGURATION ---
+    // REPLACE THESE WITH YOUR ACTUAL CLOUDINARY DETAILS
+    const CLOUD_NAME = 'z3pzbjmm'; 
+    const UPLOAD_PRESET = 'rentdirect_lodges'; 
+
+    const form = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        submitBtn.innerText = 'Uploading Image...';
+        submitBtn.disabled = true;
+
+        try {
+            // 1. UPLOAD IMAGE TO CLOUDINARY
+            const file = document.getElementById('imageFile').files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', UPLOAD_PRESET);
+
+            const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const cloudinaryData = await cloudinaryRes.json();
+            const imageUrl = cloudinaryData.secure_url; // This is the permanent link to the photo
+
+            if (!imageUrl) throw new Error('Image upload failed');
+
+            // 2. PREPARE DATA FOR MONGODB
+            submitBtn.innerText = 'Saving to Database...';
+            
+            // Convert comma-separated amenities into an array
+            const amenitiesArray = document.getElementById('amenities').value
+                .split(',')
+                .map(item => item.trim());
+
+            const lodgeData = {
+                lodgeName: document.getElementById('lodgeName').value,
+                roomType: document.getElementById('roomType').value,
+                price: Number(document.getElementById('price').value),
+                location: document.getElementById('location').value,
+                amenities: amenitiesArray,
+                imageUrls: [imageUrl], // Saving the Cloudinary URL
+                caretakerContact: document.getElementById('caretakerContact').value,
+                status: 'approved',
+                isVerified: true
+            };
+
+            // 3. SEND TO YOUR EXPRESS BACKEND
+            const backendRes = await fetch('https://rentdirect-api.onrender.com/api/lodges', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(lodgeData)
+            });
+
+            if (backendRes.ok) {
+                alert('Success! Lodge is now live.');
+                form.reset(); // Clear the form for the next notebook entry
+            } else {
+                throw new Error('Database save failed');
+            }
+
+        } catch (error) {
+            console.error('Upload Error:', error);
+            alert('Something went wrong. Check the console.');
+        } finally {
+            submitBtn.innerText = 'Upload to Database';
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+
+</body>
+</html>
