@@ -27,10 +27,10 @@
             <input type="text" placeholder="Search by street or landmark (e.g. TTC Road)" onkeyup="searchLodges(this.value)">
         </div>
         <div class="filter-row">
-            <button class="filter-btn active" onclick="filterLodges('All')">All</button>
-            <button class="filter-btn" onclick="filterLodges('Self-Contain')">Self-Contain</button>
-            <button class="filter-btn" onclick="filterLodges('Single Room')">Single Room</button>
-            <button class="filter-btn" onclick="filterLodges('1-Bedroom Flat')">1-Bedroom Flat</button>
+            <button class="filter-btn active" onclick="filterLodges('All', this)">All</button>
+            <button class="filter-btn" onclick="filterLodges('Self-Contain', this)">Self-Contain</button>
+            <button class="filter-btn" onclick="filterLodges('Single Room', this)">Single Room</button>
+            <button class="filter-btn" onclick="filterLodges('1-Bedroom Flat', this)">1-Bedroom Flat</button>
         </div>
     </div>
 
@@ -58,7 +58,7 @@
 
                 <div class="card-location">📍 Behind School Clinic, Bori</div>
                 
-                
+
                 <div class="amenities">
                     <span class="amenity-tag">💧 Running Water</span>
                     <span class="amenity-tag">⚡ Prepaid Meter</span>
@@ -174,7 +174,17 @@
     }
 
     // 3. Category Filter Logic (Triggered by the buttons)
-    function filterLodges(category) {
+    function filterLodges(category, clickedButton) {
+        // Remove the 'active' class from all buttons
+        const allButtons = document.querySelectorAll('.category-btn');
+        allButtons.forEach(btn => btn.classList.remove('active'));
+
+        // Add the 'active' class to the specific button that was just clicked
+        if (clickedButton) {
+            clickedButton.classList.add('active');
+        }
+
+        // Filter the lodges
         if (category === 'All') {
             renderLodges(allLodges);
         } else {
