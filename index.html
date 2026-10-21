@@ -98,9 +98,24 @@
                 </div>
                 
                 <div class="card-action">
-                    <button class="btn-primary">
-                        🔒 Unlock Caretaker Contact (₦500)
-                    </button>
+                    <!-- Payment Modal -->
+<div id="paymentModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <h3 style="margin-bottom: 10px; color: #1D4ED8;">Unlock Contact</h3>
+        <p style="color: #6B7280; font-size: 0.9rem; margin-bottom: 20px;">Pay a one-time fee of <strong>₦500</strong> to view the caretaker's direct phone number.</p>
+        
+        <div id="contactReveal" style="display: none; background: #ECFDF5; color: #065F46; padding: 15px; border-radius: 6px; font-size: 1.25rem; font-weight: bold; margin-bottom: 20px; text-align: center;">
+            <!-- Phone number will appear here -->
+        </div>
+
+        <button id="payBtn" class="btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="processPayment()">
+            Pay ₦500 Now
+        </button>
+        <button class="btn-secondary" style="width: 100%; background: transparent; color: #6B7280; border: none; padding: 10px; cursor: pointer;" onclick="closeModal()">
+            Cancel
+        </button>
+    </div>
+</div>
                 </div>
             </div>
         </article>
@@ -162,7 +177,7 @@
                         <div class="card-location">📍 ${lodge.location}</div>
                         <div class="amenities">${amenitiesHtml}</div>
                         <div class="card-action">
-                            <button class="btn-primary" onclick="alert('Contact Caretaker: ${lodge.caretakerContact}')">
+                           <button class="btn-primary" onclick="openModal('${lodge.caretakerContact}')">
                                 🔒 Unlock Caretaker Contact (₦500)
                             </button>
                         </div>
@@ -171,6 +186,40 @@
             `;
             feedContainer.insertAdjacentHTML('beforeend', cardHtml);
         });
+    }
+
+    // --- MODAL LOGIC ---
+    let currentContact = '';
+
+    function openModal(contact) {
+        currentContact = contact;
+        document.getElementById('paymentModal').style.display = 'flex';
+        document.getElementById('contactReveal').style.display = 'none';
+        document.getElementById('payBtn').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('paymentModal').style.display = 'none';
+    }
+
+    function processPayment() {
+        const payBtn = document.getElementById('payBtn');
+        payBtn.innerText = 'Processing Payment...';
+        payBtn.disabled = true;
+        payBtn.style.opacity = '0.7';
+
+        // Simulate a 1.5-second network delay for realism
+        setTimeout(() => {
+            payBtn.style.display = 'none'; // Hide the pay button
+            payBtn.innerText = 'Pay ₦500 Now'; // Reset it for next time
+            payBtn.disabled = false;
+            payBtn.style.opacity = '1';
+            
+            // Reveal the contact
+            const revealDiv = document.getElementById('contactReveal');
+            revealDiv.innerText = `📞 ${currentContact}`;
+            revealDiv.style.display = 'block';
+        }, 1500);
     }
 
     // 3. Category Filter Logic (Triggered by the buttons)
